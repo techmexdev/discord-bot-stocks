@@ -33,7 +33,7 @@ async def on_message(message):
 
     symbol = msg_spl[0]
     current_price = get_stocks(symbol)
-    msg = f'current price for {symbol}: {current_price}'
+    msg = f'current price for {symbol}: ${current_price}'
     await message.channel.send(msg)
 
 discord_client.run(discord_secret_token)
