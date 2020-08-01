@@ -1,19 +1,19 @@
-import requests
 import os
 import discord
 
-finhub_api_key = os.environ["FINHUB_API_KEY"]
-discord_secret_token = os.environ["DISCORD_SECRET_TOKEN"]
+from parser import parse_message, validate_message
 
-def get_stocks(symbol: str) -> str:
-    r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={symbol}&token={finhub_api_key}')
-    body = r.json()
-    if "error" in body:
-        return body["error"]
+keys = ["DISCORD_SECRET_TOKEN", "FINHUB_API_KEY"]
+def check_env():
+    keys_valid = True
+    for key in keys:
+        try:
+            os.environ[key]
+        except KeyError:
+            print(f"Error: Env Variable '{key}' is not set!")
+            keys_valid = False
 
-    current_price = body["c"]
-    return current_price
-
+    return keys_valid
 
 discord_client = discord.Client()
 
@@ -27,14 +27,21 @@ async def on_message(message):
     if message.author == discord_client.user:
         return
 
-    msg_spl = message.content.split(" ")
-    if len(msg_spl) != 2 or msg_spl[1] != "stocks":
+    if not validate_message(message.content):
         return
 
-    symbol = msg_spl[0]
-    current_price = get_stocks(symbol)
-    msg = f'current price for {symbol}: ${current_price}'
-    await message.channel.send(msg)
+    response = parse_message(message.content)
 
-discord_client.run(discord_secret_token)
+    await message.channel.send(response)
+
+def main():
+    if not check_env():
+        print("\nYou do not have all of the required ENV variables.\nExiting..")
+        return 1
+
+    discord_secret_token = os.environ["DISCORD_SECRET_TOKEN"]
+    discord_client.run(discord_secret_token)
+
+if __name__ == '__main__':
+    exit(main())
 
