@@ -6,7 +6,6 @@ finhub_api_key = os.environ["FINHUB_API_KEY"]
 discord_secret_token = os.environ["DISCORD_SECRET_TOKEN"]
 
 def get_stocks(symbol: str) -> str:
-    print("symbol", symbol)
     r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={symbol}&token={finhub_api_key}')
     body = r.json()
     if "error" in body:
@@ -28,7 +27,6 @@ async def on_message(message):
     if message.author == discord_client.user:
         return
 
-    print(f'Message from {message.author}: {message.content}')
     msg_spl = message.content.split(" ")
     if len(msg_spl) != 2 or msg_spl[1] != "stocks":
         return
