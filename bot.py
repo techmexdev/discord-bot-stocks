@@ -3,22 +3,10 @@ import os
 import discord
 
 finhub_api_key = os.environ["FINHUB_API_KEY"]
-symbol = os.environ["SYMBOL"]
-
-class MyClient(discord.Client):
-    async def on_ready(self):
-        print(f'Logged on as {self.user}!')
-
-    async def on_message(self, message):
-        print(f'Message from {message.author}: {message.content}')
-        symbol = message["content"]
-        current_price = get_stocks(symbol)
-        return f'current price for {symbol}: {current_price}'
-
-client = MyClient()
-client.run(finhub_api_key)
+discord_secret_token = os.environ["DISCORD_SECRET_TOKEN"]
 
 def get_stocks(symbol: str) -> str:
+    print("symbol", symbol)
     r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={symbol}&token={finhub_api_key}')
     body = r.json()
     if "error" in body:
@@ -27,6 +15,28 @@ def get_stocks(symbol: str) -> str:
     current_price = body["c"]
     return current_price
 
-current_price = get_stocks(symbol)
-print(f'current price: {current_price}')
+
+discord_client = discord.Client()
+
+@discord_client.event
+async def on_ready():
+    print(f'Logged on as {discord_client.user}!')
+
+@discord_client.event
+async def on_message(message):
+
+    if message.author == discord_client.user:
+        return
+
+    print(f'Message from {message.author}: {message.content}')
+    msg_spl = message.content.split(" ")
+    if len(msg_spl) != 2 or msg_spl[1] != "stocks":
+        return
+
+    symbol = msg_spl[0]
+    current_price = get_stocks(symbol)
+    msg = f'current price for {symbol}: {current_price}'
+    await message.channel.send(msg)
+
+discord_client.run(discord_secret_token)
 
